@@ -9,8 +9,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let queryCount = 0;
     const chatLimit = Math.floor(Math.random() * 3) + 4; // Ends on query 4, 5, or 6
 
-    // NEW: A local bank to hold trivia questions
+    // NEW: Local banks for both APIs to prevent rate-limiting
     let triviaQuestionBank = [];
+    let catFactBank = [];
 
     const harmlessLinks = [
         'https://pointerpointer.com/',
@@ -34,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Listen for the user to submit the form
-    chatForm.addEventListener('submit', async (e) => { // Added 'async'
+    chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const userMessage = userInput.value.trim();
         if (userMessage === '') return;
@@ -56,17 +57,19 @@ document.addEventListener("DOMContentLoaded", () => {
         if (queryCount >= chatLimit) {
             await endChatSession();
         } else {
-            await generateNormalResponse();
+            // REVISED: This is no longer async, as both functions just pull from local arrays
+            generateNormalResponse();
         }
 
         removeTypingIndicator();
     }
 
-    async function generateNormalResponse() {
+    function generateNormalResponse() {
         if (Math.random() > 0.5) {
-            await fetchCatFact();
+            // REVISED: Pulls from local cat fact bank
+            fetchCatFact();
         } else {
-            // REVISED: This is no longer async, it just pulls from our local array
+            // REVISED: Pulls from local trivia bank
             fetchRandomQuestion();
         }
     }
@@ -74,22 +77,19 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- API & Data Functions ---
 
     /**
-     * API Function 1: Fetches a fact from the Cat Fact API
+     * REVISED - Function 1: Pulls a pre-fetched fact from our local cat bank
      */
-    async function fetchCatFact() {
-        try {
-            const response = await fetch('https://catfact.ninja/fact');
-            if (!response.ok) throw new Error(`API returned status ${response.status}`);
+    function fetchCatFact() {
+        if (catFactBank.length > 0) {
+            const factData = catFactBank.pop(); // Pull one off the stack
             
-            const data = await response.json();
-            
-            appendMessageAsText(data.fact, 'bot');
+            appendMessageAsText(factData.fact, 'bot');
             setTimeout(() => {
                 appendSourceMessage("The Cat's Meow", getRandomLink());
             }, 600);
 
         } catch (error) {
-            console.error('Cat Fact API failed:', error);
+            console.error('Cat fact bank is empty or failed:', error);
             appendMessageAsText("My cat-fact-retriever is napping. Here's one: Cats are liquid.", 'bot');
         }
     }
@@ -98,7 +98,6 @@ document.addEventListener("DOMContentLoaded", () => {
      * REVISED - Function 2: Pulls a pre-fetched question from our local bank
      */
     function fetchRandomQuestion() {
-        // Check if we have any questions left in the bank
         if (triviaQuestionBank.length > 0) {
             const questionData = triviaQuestionBank.pop(); // Pull one off the stack
             const questionText = decodeHtml(questionData.question);
@@ -108,28 +107,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 appendSourceMessage(`Category: ${questionData.category}`, getRandomLink());
             }, 600);
         } else {
-            // Fallback if we run out of questions or the initial load failed
             console.error('Trivia question bank is empty.');
             appendMessageAsText("My question-generator is on strike. Is a hotdog a sandwich? Debate.", 'bot');
         }
     }
 
     /**
-     * API Function 3: Fetches a random activity from the Bored API
-     */
-// (Keep all your other code the same)
-
-    /**
      * REVISED - API Function 3: Fetches a random activity from the Bored API
      */
     async function endChatSession() {
         try {
-            // REVISED: Removed 'www.' from the URL
-            const response = await fetch('https://boredapi.com/api/activity');
+            // REVISED: Added 'www.' to the URL to prevent redirect/CORS error
+            const response = await fetch('https://www.boredapi.com/api/activity');
             if (!response.ok) throw new Error(`API returned status ${response.status}`);
 
             const data = await response.json();
-            
             const excuseText = `SESSION TERMINATED. I have to go... ${data.activity}.`; 
 
             appendMessageAsText(excuseText, 'bot');
@@ -149,8 +141,6 @@ document.addEventListener("DOMContentLoaded", () => {
         sendButton.style.backgroundColor = '#aaa';
         sendButton.style.cursor = 'not-allowed';
     }
-
-// (Keep all your other code the same)
 
     // --- Utility Functions (Appending Messages) ---
 
@@ -189,10 +179,25 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- NEW: Function to pre-load trivia questions ---
+    // --- NEW: Function to pre-load cat facts ---
+    async function loadCatFacts() {
+        try {
+            // Fetch 10 facts at once from the 'facts' (list) endpoint
+            const response = await fetch('https://catfact.ninja/facts?limit=10');
+            if (!response.ok) throw new Error(`API returned status ${response.status}`);
+            
+            const data = await response.json();
+            catFactBank = data.data; // Store them in our array (this API uses the 'data' key)
+            console.log("Cat fact bank loaded:", catFactBank);
+
+        } catch (error) {
+            console.error('Cat Fact API failed on initial load:', error);
+        }
+    }
+
+    // --- Function to pre-load trivia questions ---
     async function loadTriviaQuestions() {
         try {
-            // Fetch 10 questions at once
             const response = await fetch('https://opentdb.com/api.php?amount=10');
             if (!response.ok) throw new Error(`API returned status ${response.status}`);
             
@@ -202,11 +207,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         } catch (error) {
             console.error('Trivia API failed on initial load:', error);
-            // Don't show a message, our fallback in fetchRandomQuestion() will handle it
         }
     }
 
     // --- SCRIPT START ---
-    // Pre-load our question bank as soon as the page is ready.
+    // Pre-load both banks as soon as the page is ready.
     loadTriviaQuestions();
+    loadCatFacts();
 });
