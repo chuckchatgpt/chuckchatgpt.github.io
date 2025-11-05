@@ -9,6 +9,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let queryCount = 0;
     const chatLimit = Math.floor(Math.random() * 3) + 4; // Ends on query 4, 5, or 6
 
+    // NEW: A local bank to hold trivia questions
+    let triviaQuestionBank = [];
+
     const harmlessLinks = [
         'https://pointerpointer.com/',
         'https://cat-bounce.com/',
@@ -23,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return harmlessLinks[Math.floor(Math.random() * harmlessLinks.length)];
     }
 
-    // Helper function to decode HTML entities (like &quot; or &#039;)
+    // Helper function to decode HTML entities
     function decodeHtml(html) {
         const txt = document.createElement("textarea");
         txt.innerHTML = html;
@@ -63,9 +66,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (Math.random() > 0.5) {
             await fetchCatFact();
         } else {
-            await fetchRandomQuestion();
+            // REVISED: This is no longer async, it just pulls from our local array
+            fetchRandomQuestion();
         }
     }
+
+    // --- API & Data Functions ---
 
     /**
      * API Function 1: Fetches a fact from the Cat Fact API
@@ -89,50 +95,43 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * API Function 2: Fetches a random question from the Open Trivia DB
+     * REVISED - Function 2: Pulls a pre-fetched question from our local bank
      */
-    async function fetchRandomQuestion() {
-        try {
-            const response = await fetch('https://opentdb.com/api.php?amount=1');
-            if (!response.ok) throw new Error(`API returned status ${response.status}`);
-            
-            const data = await response.json();
-            const questionText = decodeHtml(data.results[0].question);
+    function fetchRandomQuestion() {
+        // Check if we have any questions left in the bank
+        if (triviaQuestionBank.length > 0) {
+            const questionData = triviaQuestionBank.pop(); // Pull one off the stack
+            const questionText = decodeHtml(questionData.question);
             
             appendMessageAsText(questionText, 'bot');
             setTimeout(() => {
-                appendSourceMessage(`Category: ${data.results[0].category}`, getRandomLink());
+                appendSourceMessage(`Category: ${questionData.category}`, getRandomLink());
             }, 600);
-
-        } catch (error) {
-            console.error('Trivia API failed:', error);
+        } else {
+            // Fallback if we run out of questions or the initial load failed
+            console.error('Trivia question bank is empty.');
             appendMessageAsText("My question-generator is on strike. Is a hotdog a sandwich? Debate.", 'bot');
         }
     }
 
     /**
-     * REVISED - API Function 3: Fetches a random activity from the Bored API
+     * API Function 3: Fetches a random activity from the Bored API
      */
     async function endChatSession() {
         try {
-            // NEW API URL:
             const response = await fetch('https://www.boredapi.com/api/activity');
             if (!response.ok) throw new Error(`API returned status ${response.status}`);
 
             const data = await response.json();
-            
-            // NEW: Build an excuse from the activity
             const excuseText = `SESSION TERMINATED. I have to go... ${data.activity}.`; 
 
             appendMessageAsText(excuseText, 'bot');
             setTimeout(() => {
-                // NEW: Use the activity 'type' as the source
                 appendSourceMessage(`Source: My "${data.type}" to-do list`, getRandomLink());
             }, 600);
 
         } catch (error) {
             console.error('Bored API failed:', error);
-            // NEW: Updated fallback message
             appendMessageAsText("SESSION TERMINATED. My servers are on fire. Literally. Goodbye.", 'bot');
         }
 
@@ -156,28 +155,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function appendSourceMessage(sourceText, sourceLink) {
         const messageDiv = document.createElement('div');
-        messageDiv.classList.add('bot-source-message');
-        messageDiv.innerHTML = `Source: <a href="${sourceLink}" target="_blank" rel="noopener noreferrer">${decodeHtml(sourceText)}</a>`;
-        chatWindow.appendChild(messageDiv);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
-
-    // --- Utility Functions (Typing Indicator) ---
-
-    function showTypingIndicator() {
-        if (document.getElementById('typing-indicator')) return;
-        const typingDiv = document.createElement('div');
-        typingDiv.id = 'typing-indicator';
-        typingDiv.classList.add('message', 'bot-message');
-        typingDiv.textContent = 'Processing...';
-        chatWindow.appendChild(typingDiv);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
-
-    function removeTypingIndicator() {
-        const typingDiv = document.getElementById('typing-indicator');
-        if (typingDiv) {
-            chatWindow.removeChild(typingDiv);
-        }
-    }
-});
+        messageDiv.classList
