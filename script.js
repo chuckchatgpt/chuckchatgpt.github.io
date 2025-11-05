@@ -155,4 +155,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function appendSourceMessage(sourceText, sourceLink) {
         const messageDiv = document.createElement('div');
-        messageDiv.classList
+        messageDiv.classList.add('bot-source-message');
+        messageDiv.innerHTML = `Source: <a href="${sourceLink}" target="_blank" rel="noopener noreferrer">${decodeHtml(sourceText)}</a>`;
+        chatWindow.appendChild(messageDiv);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    // --- Utility Functions (Typing Indicator) ---
+
+    function showTypingIndicator() {
+        if (document.getElementById('typing-indicator')) return;
+        const typingDiv = document.createElement('div');
+        typingDiv.id = 'typing-indicator';
+        typingDiv.classList.add('message', 'bot-message');
+        typingDiv.textContent = 'Processing...';
+        chatWindow.appendChild(typingDiv);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+        const typingDiv = document.getElementById('typing-indicator');
+        if (typingDiv) {
+            chatWindow.removeChild(typingDiv);
+        }
+    }
+
+    // --- NEW: Function to pre-load trivia questions ---
+    async function loadTriviaQuestions() {
+        try {
+            // Fetch 10 questions at once
+            const response = await fetch('https://opentdb.com/api.php?amount=10');
+            if (!response.ok) throw new Error(`API returned status ${response.status}`);
+            
+            const data = await response.json();
+            triviaQuestionBank = data.results; // Store them in our array
+            console.log("Trivia question bank loaded:", triviaQuestionBank);
+
+        } catch (error) {
+            console.error('Trivia API failed on initial load:', error);
+            // Don't show a message, our fallback in fetchRandomQuestion() will handle it
+        }
+    }
+
+    // --- SCRIPT START ---
+    // Pre-load our question bank as soon as the page is ready.
+    loadTriviaQuestions();
+});
