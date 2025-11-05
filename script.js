@@ -74,10 +74,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- API & Data Functions ---
 
     /**
-     * REVISED - Function 1: Pulls a pre-fetched fact from our local cat bank
+     * Function 1: Pulls a pre-fetched fact from our local cat bank
      */
     function fetchCatFact() {
-        try { // <-- ADDED MISSING 'try'
+        try {
             if (catFactBank.length > 0) {
                 const factData = catFactBank.pop(); // Pull one off the stack
                 
@@ -85,21 +85,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 setTimeout(() => {
                     appendSourceMessage("The Cat's Meow", getRandomLink());
                 }, 600);
-            } else { // <-- ADDED 'else' for empty bank
+            } else { 
                 console.error('Cat fact bank is empty.');
                 appendMessageAsText("My cat-fact-retriever is napping. Here's one: Cats are liquid.", 'bot');
             }
-        } catch (error) { // <-- NOW THIS 'catch' IS VALID
+        } catch (error) { 
             console.error('Error in fetchCatFact:', error);
             appendMessageAsText("My cat-fact-retriever is napping. Here's one: Cats are liquid.", 'bot');
         }
     }
 
     /**
-     * REVISED - Function 2: Pulls a pre-fetched question from our local bank
+     * Function 2: Pulls a pre-fetched question from our local bank
      */
     function fetchRandomQuestion() {
-        try { // <-- ADDED MISSING 'try'
+        try {
             if (triviaQuestionBank.length > 0) {
                 const questionData = triviaQuestionBank.pop(); // Pull one off the stack
                 const questionText = decodeHtml(questionData.question);
@@ -108,11 +108,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 setTimeout(() => {
                     appendSourceMessage(`Category: ${questionData.category}`, getRandomLink());
                 }, 600);
-            } else { // <-- ADDED 'else' for empty bank
+            } else { 
                 console.error('Trivia question bank is empty.');
                 appendMessageAsText("My question-generator is on strike. Is a hotdog a sandwich? Debate.", 'bot');
             }
-        } catch (error) { // <-- NOW THIS 'catch' IS VALID
+        } catch (error) { 
             console.error('Error in fetchRandomQuestion:', error);
             appendMessageAsText("My question-generator is on strike. Is a hotdog a sandwich? Debate.", 'bot');
         }
@@ -123,7 +123,8 @@ document.addEventListener("DOMContentLoaded", () => {
      */
     async function endChatSession() {
         try {
-            const response = await fetch('https://www.boredapi.com/api/activity');
+            // REVISED: Removed 'www.' from the URL
+            const response = await fetch('https://boredapi.com/api/activity');
             if (!response.ok) throw new Error(`API returned status ${response.status}`);
 
             const data = await response.json();
