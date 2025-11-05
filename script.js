@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let queryCount = 0;
     const chatLimit = Math.floor(Math.random() * 3) + 4; // Ends on query 4, 5, or 6
 
-    // NEW: Local banks for both APIs to prevent rate-limiting
+    // Local banks for both APIs to prevent rate-limiting
     let triviaQuestionBank = [];
     let catFactBank = [];
 
@@ -57,7 +57,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (queryCount >= chatLimit) {
             await endChatSession();
         } else {
-            // REVISED: This is no longer async, as both functions just pull from local arrays
             generateNormalResponse();
         }
 
@@ -66,10 +65,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function generateNormalResponse() {
         if (Math.random() > 0.5) {
-            // REVISED: Pulls from local cat fact bank
             fetchCatFact();
         } else {
-            // REVISED: Pulls from local trivia bank
             fetchRandomQuestion();
         }
     }
@@ -80,16 +77,20 @@ document.addEventListener("DOMContentLoaded", () => {
      * REVISED - Function 1: Pulls a pre-fetched fact from our local cat bank
      */
     function fetchCatFact() {
-        if (catFactBank.length > 0) {
-            const factData = catFactBank.pop(); // Pull one off the stack
-            
-            appendMessageAsText(factData.fact, 'bot');
-            setTimeout(() => {
-                appendSourceMessage("The Cat's Meow", getRandomLink());
-            }, 600);
-
-        } catch (error) {
-            console.error('Cat fact bank is empty or failed:', error);
+        try { // <-- ADDED MISSING 'try'
+            if (catFactBank.length > 0) {
+                const factData = catFactBank.pop(); // Pull one off the stack
+                
+                appendMessageAsText(factData.fact, 'bot');
+                setTimeout(() => {
+                    appendSourceMessage("The Cat's Meow", getRandomLink());
+                }, 600);
+            } else { // <-- ADDED 'else' for empty bank
+                console.error('Cat fact bank is empty.');
+                appendMessageAsText("My cat-fact-retriever is napping. Here's one: Cats are liquid.", 'bot');
+            }
+        } catch (error) { // <-- NOW THIS 'catch' IS VALID
+            console.error('Error in fetchCatFact:', error);
             appendMessageAsText("My cat-fact-retriever is napping. Here's one: Cats are liquid.", 'bot');
         }
     }
@@ -98,26 +99,30 @@ document.addEventListener("DOMContentLoaded", () => {
      * REVISED - Function 2: Pulls a pre-fetched question from our local bank
      */
     function fetchRandomQuestion() {
-        if (triviaQuestionBank.length > 0) {
-            const questionData = triviaQuestionBank.pop(); // Pull one off the stack
-            const questionText = decodeHtml(questionData.question);
-            
-            appendMessageAsText(questionText, 'bot');
-            setTimeout(() => {
-                appendSourceMessage(`Category: ${questionData.category}`, getRandomLink());
-            }, 600);
-        } else {
-            console.error('Trivia question bank is empty.');
+        try { // <-- ADDED MISSING 'try'
+            if (triviaQuestionBank.length > 0) {
+                const questionData = triviaQuestionBank.pop(); // Pull one off the stack
+                const questionText = decodeHtml(questionData.question);
+                
+                appendMessageAsText(questionText, 'bot');
+                setTimeout(() => {
+                    appendSourceMessage(`Category: ${questionData.category}`, getRandomLink());
+                }, 600);
+            } else { // <-- ADDED 'else' for empty bank
+                console.error('Trivia question bank is empty.');
+                appendMessageAsText("My question-generator is on strike. Is a hotdog a sandwich? Debate.", 'bot');
+            }
+        } catch (error) { // <-- NOW THIS 'catch' IS VALID
+            console.error('Error in fetchRandomQuestion:', error);
             appendMessageAsText("My question-generator is on strike. Is a hotdog a sandwich? Debate.", 'bot');
         }
     }
 
     /**
-     * REVISED - API Function 3: Fetches a random activity from the Bored API
+     * API Function 3: Fetches a random activity from the Bored API
      */
     async function endChatSession() {
         try {
-            // REVISED: Added 'www.' to the URL to prevent redirect/CORS error
             const response = await fetch('https://www.boredapi.com/api/activity');
             if (!response.ok) throw new Error(`API returned status ${response.status}`);
 
@@ -179,15 +184,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- NEW: Function to pre-load cat facts ---
+    // --- Function to pre-load cat facts ---
     async function loadCatFacts() {
         try {
-            // Fetch 10 facts at once from the 'facts' (list) endpoint
             const response = await fetch('https://catfact.ninja/facts?limit=10');
             if (!response.ok) throw new Error(`API returned status ${response.status}`);
             
             const data = await response.json();
-            catFactBank = data.data; // Store them in our array (this API uses the 'data' key)
+            catFactBank = data.data;
             console.log("Cat fact bank loaded:", catFactBank);
 
         } catch (error) {
@@ -202,7 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!response.ok) throw new Error(`API returned status ${response.status}`);
             
             const data = await response.json();
-            triviaQuestionBank = data.results; // Store them in our array
+            triviaQuestionBank = data.results;
             console.log("Trivia question bank loaded:", triviaQuestionBank);
 
         } catch (error) {
@@ -211,7 +215,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- SCRIPT START ---
-    // Pre-load both banks as soon as the page is ready.
     loadTriviaQuestions();
     loadCatFacts();
 });
