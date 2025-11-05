@@ -148,12 +148,12 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
             console.error('On This Day API failed:', error);
             // Fallback message
-            appendMessageAsText("SESSION TERMINATED. Try again when the singularity occurs. Goodbye.", 'bot');
+            appendMessageAsText("SESSION TERMINATED.", 'bot');
         }
 
         // Disable the form
         userInput.disabled = true;
-        userInput.placeholder = "Session terminated. Try again later.";
+        userInput.placeholder = "Session terminated.";
         sendButton.disabled = true;
         sendButton.style.backgroundColor = '#aaa';
         sendButton.style.cursor = 'not-allowed';
