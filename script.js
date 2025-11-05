@@ -9,7 +9,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let queryCount = 0;
     const chatLimit = Math.floor(Math.random() * 3) + 4; // Ends on query 4, 5, or 6
 
-    // REVISED: Kept harmless links for our satirical sources
     const harmlessLinks = [
         'https://pointerpointer.com/',
         'https://cat-bounce.com/',
@@ -62,16 +61,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function generateNormalResponse() {
         if (Math.random() > 0.5) {
-            // REPLACED: Now fetches a cat fact
             await fetchCatFact();
         } else {
-            // This one (Open Trivia) works fine
             await fetchRandomQuestion();
         }
     }
 
     /**
-     * NEW - API Function 1: Fetches a fact from the Cat Fact API
+     * API Function 1: Fetches a fact from the Cat Fact API
      */
     async function fetchCatFact() {
         try {
@@ -82,13 +79,11 @@ document.addEventListener("DOMContentLoaded", () => {
             
             appendMessageAsText(data.fact, 'bot');
             setTimeout(() => {
-                // Cat API doesn't give a source, so we make one up
                 appendSourceMessage("The Cat's Meow", getRandomLink());
             }, 600);
 
         } catch (error) {
             console.error('Cat Fact API failed:', error);
-            // Fallback message
             appendMessageAsText("My cat-fact-retriever is napping. Here's one: Cats are liquid.", 'bot');
         }
     }
@@ -116,24 +111,29 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * API Function 3: Fetches a random excuse from the Excuser API
+     * REVISED - API Function 3: Fetches a random activity from the Bored API
      */
     async function endChatSession() {
         try {
-            const response = await fetch('https://excuser.herokuapp.com/v1/excuse/office');
+            // NEW API URL:
+            const response = await fetch('https://www.boredapi.com/api/activity');
             if (!response.ok) throw new Error(`API returned status ${response.status}`);
 
             const data = await response.json();
-            const excuseText = data[0].excuse; 
+            
+            // NEW: Build an excuse from the activity
+            const excuseText = `SESSION TERMINATED. I have to go... ${data.activity}.`; 
 
             appendMessageAsText(excuseText, 'bot');
             setTimeout(() => {
-                appendSourceMessage("My Official Excuse Manual", getRandomLink());
+                // NEW: Use the activity 'type' as the source
+                appendSourceMessage(`Source: My "${data.type}" to-do list`, getRandomLink());
             }, 600);
 
         } catch (error) {
-            console.error('Excuser API failed:', error);
-            appendMessageAsText("SESSION TERMINATED. I... uh... have to go water my fish. Goodbye.", 'bot');
+            console.error('Bored API failed:', error);
+            // NEW: Updated fallback message
+            appendMessageAsText("SESSION TERMINATED. My servers are on fire. Literally. Goodbye.", 'bot');
         }
 
         // Disable the form
