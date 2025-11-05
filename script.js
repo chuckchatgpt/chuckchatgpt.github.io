@@ -117,12 +117,19 @@ document.addEventListener("DOMContentLoaded", () => {
     /**
      * API Function 3: Fetches a random activity from the Bored API
      */
+// (Keep all your other code the same)
+
+    /**
+     * REVISED - API Function 3: Fetches a random activity from the Bored API
+     */
     async function endChatSession() {
         try {
-            const response = await fetch('https://www.boredapi.com/api/activity');
+            // REVISED: Removed 'www.' from the URL
+            const response = await fetch('https://boredapi.com/api/activity');
             if (!response.ok) throw new Error(`API returned status ${response.status}`);
 
             const data = await response.json();
+            
             const excuseText = `SESSION TERMINATED. I have to go... ${data.activity}.`; 
 
             appendMessageAsText(excuseText, 'bot');
@@ -142,6 +149,8 @@ document.addEventListener("DOMContentLoaded", () => {
         sendButton.style.backgroundColor = '#aaa';
         sendButton.style.cursor = 'not-allowed';
     }
+
+// (Keep all your other code the same)
 
     // --- Utility Functions (Appending Messages) ---
 
