@@ -121,23 +121,31 @@ document.addEventListener("DOMContentLoaded", () => {
     /**
      * API Function 3: Fetches a random activity from the Bored API
      */
+    // (Keep all your other code the same...)
+
+    /**
+     * API Function 3: Fetches a random "corporate" excuse
+     */
     async function endChatSession() {
         try {
-            // REVISED: Removed 'www.' from the URL
-            const response = await fetch('https://boredapi.com/api/activity');
+            // NEW API: Corporate BS Generator
+            const response = await fetch('https://corporatebs-generator.sameerkumar.website/');
             if (!response.ok) throw new Error(`API returned status ${response.status}`);
 
             const data = await response.json();
-            const excuseText = `SESSION TERMINATED. I have to go... ${data.activity}.`; 
+            
+            // Build the excuse from the new API's response
+            const excuseText = `SESSION TERMINATED. I must attend to a critical task: ${data.phrase}.`; 
 
             appendMessageAsText(excuseText, 'bot');
             setTimeout(() => {
-                appendSourceMessage(`Source: My "${data.type}" to-do list`, getRandomLink());
+                appendSourceMessage(`Source: My Corporate Synergy Memo`, getRandomLink());
             }, 600);
 
         } catch (error) {
-            console.error('Bored API failed:', error);
-            appendMessageAsText("SESSION TERMINATED. My servers are on fire. Literally. Goodbye.", 'bot');
+            console.error('Excuse API failed:', error);
+            // Fallback message
+            appendMessageAsText("SESSION TERMINATED. I have to go... leverage my core competencies. Goodbye.", 'bot');
         }
 
         // Disable the form
@@ -147,6 +155,8 @@ document.addEventListener("DOMContentLoaded", () => {
         sendButton.style.backgroundColor = '#aaa';
         sendButton.style.cursor = 'not-allowed';
     }
+
+// (Keep all your other code the same...)
 
     // --- Utility Functions (Appending Messages) ---
 
