@@ -7,7 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- State Variables ---
     let queryCount = 0;
-    const chatLimit = Math.floor(Math.random() * 3) + 4; // Ends on query 4, 5, or 6
+    // REVISED: New random range from 3 to 10
+    const chatLimit = Math.floor(Math.random() * 8) + 3; // (0-7) + 3 = 3 to 10
 
     // Local banks for both APIs to prevent rate-limiting
     let triviaQuestionBank = [];
@@ -79,8 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function fetchCatFact() {
         try {
             if (catFactBank.length > 0) {
-                const factData = catFactBank.pop(); // Pull one off the stack
-                
+                const factData = catFactBank.pop(); 
                 appendMessageAsText(factData.fact, 'bot');
                 setTimeout(() => {
                     appendSourceMessage("The Cat's Meow", getRandomLink());
@@ -101,7 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function fetchRandomQuestion() {
         try {
             if (triviaQuestionBank.length > 0) {
-                const questionData = triviaQuestionBank.pop(); // Pull one off the stack
+                const questionData = triviaQuestionBank.pop(); 
                 const questionText = decodeHtml(questionData.question);
                 
                 appendMessageAsText(questionText, 'bot');
@@ -119,33 +119,36 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * API Function 3: Fetches a random activity from the Bored API
-     */
-    // (Keep all your other code the same...)
-
-    /**
-     * API Function 3: Fetches a random "corporate" excuse
+     * REVISED - API Function 3: Fetches a random "On This Day" event
      */
     async function endChatSession() {
         try {
-            // NEW API: Corporate BS Generator
-            const response = await fetch('https://corporatebs-generator.sameerkumar.website/');
+            // Generate a random date
+            const month = Math.floor(Math.random() * 12) + 1;
+            const day = Math.floor(Math.random() * 28) + 1; // Use 28 to be safe for all months
+
+            // NEW API: "On This Day"
+            const response = await fetch(`https://byabbe.se/on-this-day/${month}/${day}/events.json`);
             if (!response.ok) throw new Error(`API returned status ${response.status}`);
 
             const data = await response.json();
             
-            // Build the excuse from the new API's response
-            const excuseText = `SESSION TERMINATED. I must attend to a critical task: ${data.phrase}.`; 
+            // Pick a random event from the list for that day
+            const event = data.events[Math.floor(Math.random() * data.events.length)];
+
+            // Build the new excuse
+            const excuseText = `Session Terminated. Try again when ${event.description}.`; 
 
             appendMessageAsText(excuseText, 'bot');
             setTimeout(() => {
-                appendSourceMessage(`Source: My Corporate Synergy Memo`, getRandomLink());
+                // Use the year of the event as the source
+                appendSourceMessage(`Source: The Year ${event.year}`, getRandomLink());
             }, 600);
 
         } catch (error) {
-            console.error('Excuse API failed:', error);
+            console.error('On This Day API failed:', error);
             // Fallback message
-            appendMessageAsText("SESSION TERMINATED. I have to go... leverage my core competencies. Goodbye.", 'bot');
+            appendMessageAsText("SESSION TERMINATED. Try again when the singularity occurs. Goodbye.", 'bot');
         }
 
         // Disable the form
@@ -155,8 +158,6 @@ document.addEventListener("DOMContentLoaded", () => {
         sendButton.style.backgroundColor = '#aaa';
         sendButton.style.cursor = 'not-allowed';
     }
-
-// (Keep all your other code the same...)
 
     // --- Utility Functions (Appending Messages) ---
 
@@ -210,7 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- Function to pre-load trivia questions ---
+// --- Function to pre-load trivia questions ---
     async function loadTriviaQuestions() {
         try {
             const response = await fetch('https://opentdb.com/api.php?amount=10');
