@@ -75,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- API & Data Functions ---
 
     /**
-     * Function 1: Pulls a pre-fetched fact from our local cat bank
+     *  Pulls a pre-fetched fact from api cat bank
      */
     function fetchCatFact() {
         try {
